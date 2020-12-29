@@ -1,5 +1,7 @@
 #include "pointCloudProcess.h"
 
+PointCloud<PointNormal>::Ptr doncloud_filtered(new PointCloud<PointNormal>);
+
 void pointCloudProcess::removeOutlier(int meank=25,double threshold=0.1)
 {
 	pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> filter;
@@ -42,7 +44,7 @@ void pointCloudProcess::drawWeldCloud(int maxiterations, double threshold)
 	return;
 }
 
-void pointCloudProcess::donFilter()
+void pointCloudProcess::donFilter(float smallsize=0.005f, float largesize=1.0f)
 {
 	NormalEstimationOMP<PointXYZRGB, PointNormal> ne;
 	search::KdTree<PointXYZRGB>::Ptr tree(new search::KdTree<PointXYZRGB>);
@@ -51,10 +53,10 @@ void pointCloudProcess::donFilter()
 	ne.setSearchMethod(tree);
 	ne.setViewPoint(numeric_limits<float>::max(), numeric_limits<float>::max(), numeric_limits<float>::max());
 	PointCloud<PointNormal>::Ptr normals_small_scale(new PointCloud<PointNormal>), normals_large_scale(new PointCloud<PointNormal>);
-	ne.setRadiusSearch(0.005);
+	ne.setRadiusSearch(smallsize);
 	cout << "computing normals of small size" << endl;
 	ne.compute(*normals_small_scale);
-	ne.setRadiusSearch(1.0);
+	ne.setRadiusSearch(largesize);
 	cout << "computing normals of large size" << endl;
 	ne.compute(*normals_large_scale);
 	DifferenceOfNormalsEstimation<PointXYZRGB, PointNormal, PointNormal> don;
@@ -81,7 +83,6 @@ void pointCloudProcess::donFilter()
 	ConditionalRemoval<PointNormal> condrem;
 	condrem.setCondition(range_cond);
 	condrem.setInputCloud(doncloud);
-	PointCloud<PointNormal>::Ptr doncloud_filtered(new PointCloud<PointNormal>);
 	condrem.filter(*doncloud_filtered);
 	doncloud = doncloud_filtered;
 	//pcl::io::savePCDFileASCII("???", *doncloud);
@@ -94,32 +95,37 @@ void pointCloudProcess::donFilter()
 	MView2->spin();
 }
 
-void pointCloudProcess::drawWeldLine()
+void pointCloudProcess::drawWeldLine(float threshold=0.005f)
 {
-	//ModelCoefficients::Ptr coefficents(new ModelCoefficients);
-	//PointIndices::Ptr inliers(new PointIndices);
-	//SACSegmentation<PointXYZ> seg;
-	//seg.setOptimizeCoefficients(true);
-	//seg.setModelType(SACMODEL_LINE);
-	//seg.setMethodType(SAC_RANSAC);
-	//seg.setDistanceThreshold(0.005);
-	//seg.setInputCloud(cloud);
-	//seg.segment(*inliers, *coefficents);
-	//ExtractIndices<PointXYZ> extract;
-	//extract.setInputCloud(cloud);
-	//extract.setIndices(inliers);
-	//extract.setNegative(false);
-	//extract.filter(*cloud_filtered);
-	//PointXYZ min, max;
-	//getMinMax3D(*origin_max, min, max);
-	//PointXYZ p1(((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], min.y, ((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
-	//PointXYZ p2(((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], max.y, ((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
-	//pcl::visualization::PCLVisualizer viewer("simple");
-	//viewer.addPointCloud(origin);
-	//viewer.addLine<PointXYZ>(p1, p2, 0, 1, 0, "line", 0);
-	////viewer.addLine<PointXYZ>(min, max, 1, 0, 0, "line2", 0);
-	//while (!viewer.wasStopped())
-	//{
-	//	viewer.spinOnce(100);
-	//}
+	PointCloud<PointXYZ>::Ptr doncloud_filtered_duplic(new PointCloud<PointXYZ>());
+	PointCloud<PointXYZ>::Ptr cloud_line(new PointCloud<PointXYZ>());
+	copyPointCloud(*doncloud_filtered, *cloud_line);
+	copyPointCloud(*doncloud_filtered, *doncloud_filtered_duplic);
+	ModelCoefficients::Ptr coefficents(new ModelCoefficients);
+	PointIndices::Ptr inliers(new PointIndices);
+	SACSegmentation<PointXYZ> seg;
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(SACMODEL_LINE);
+	seg.setMethodType(SAC_RANSAC);
+	seg.setDistanceThreshold(threshold);
+	seg.setInputCloud(cloud_line);
+	seg.segment(*inliers, *coefficents);
+	ExtractIndices<PointXYZ> extract;
+	extract.setInputCloud(cloud_line);
+	extract.setIndices(inliers);
+	extract.setNegative(false);
+	extract.filter(*cloud_line);
+	PointXYZ min, max;
+	getMinMax3D(*doncloud_filtered_duplic, min, max);
+	PointXYZ p1(((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], min.y, ((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
+	PointXYZ p2(((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], max.y, ((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
+	pcl::visualization::PCLVisualizer viewer("simple");
+	viewer.addPointCloud(doncloud_filtered_duplic);
+	viewer.addLine<PointXYZ>(p1, p2, 0, 1, 0, "line", 0);
+	//viewer.addLine<PointXYZ>(min, max, 1, 0, 0, "line2", 0);
+	while (!viewer.wasStopped())
+	{
+		viewer.spinOnce(100);
+	}
+	return;
 }

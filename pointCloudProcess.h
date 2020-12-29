@@ -2,6 +2,8 @@
 
 #include "KinectCamera.h"
 
+#include <pcl/common/common.h>
+
 #include <pcl/kdtree/kdtree.h>
 
 #include <pcl/features/normal_3d.h>
@@ -28,6 +30,6 @@ class pointCloudProcess
 public:
 	void removeOutlier(int meank , double threshold );
 	void drawWeldCloud(int maxiterations, double threshold);
-	void donFilter();
-	void drawWeldLine();
+	void donFilter(float smallsize,float largesize);
+	void drawWeldLine(float threshold);
 };
