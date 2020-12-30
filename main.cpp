@@ -38,6 +38,11 @@ int main()
 	trans.addTargetPoints(0.42473236f, 0.47370705f, 0.28595987f);
 	trans.addTargetPoints(0.38551146f, 0.51143277f, 0.28599533f);*/
 	trans.computerTranform();
+	pointCloudProcess pro;
+	pro.removeOutlier(25,0.1);
+	pro.drawWeldCloud(1000, 0.1);
+	pro.donFilter(0.005, 1.0);
+	pro.drawWeldLine(0.005);
 	trans.convert_coordinate_to_robot(1.0f, 2.0f, 3.0f);
 	return 0;
 }
