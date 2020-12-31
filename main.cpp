@@ -40,8 +40,8 @@ int main()
 	trans.computerTranform();
 	pointCloudProcess pro;
 	pro.voxelfilter();
-	pro.removeOutlier(500,0.01);
-	pro.drawWeldCloud(1000, 0.1);
+	pro.removeOutlier(500,0.001);
+	pro.drawWeldCloud(1000, 0.05);
 	pro.donFilter(0.005, 1.0);
 	vector<PointXYZ> points = pro.drawWeldLine(0.005);
 	for (size_t i = 0; i < points.size(); i++)
