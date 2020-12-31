@@ -2,6 +2,8 @@
 
 #include "KinectCamera.h"
 
+#include <pcl/visualization/cloud_viewer.h>
+
 #include <pcl/common/common.h>
 
 #include <pcl/kdtree/kdtree.h>
@@ -13,6 +15,7 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/conditional_removal.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <pcl/segmentation/sac_segmentation.h>
 
@@ -28,6 +31,7 @@ using namespace pcl;
 class pointCloudProcess
 {
 public:
+	void voxelfilter();
 	void removeOutlier(int meank , double threshold );
 	void drawWeldCloud(int maxiterations, double threshold);
 	void donFilter(float smallsize,float largesize);

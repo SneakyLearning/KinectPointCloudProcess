@@ -2,18 +2,39 @@
 
 PointCloud<PointNormal>::Ptr doncloud_filtered(new PointCloud<PointNormal>);
 
-void pointCloudProcess::removeOutlier(int meank=25,double threshold=0.1)
+void pointCloudProcess::voxelfilter()
 {
-	pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> filter;
-	filter.setInputCloud(cloud);
-	filter.setMeanK(25);
-	filter.setStddevMulThresh(0.1);
-	filter.filter(*cloud);
-	pcl::visualization::PCLVisualizer viewer("simple");
-	viewer.addPointCloud(cloud);
+	VoxelGrid<PointXYZ> sor;
+	sor.setInputCloud(cloud);
+	sor.setLeafSize(0.01f, 0.01f, 0.01f);
+	sor.filter(*cloud);
+	pcl::visualization::PCLVisualizer viewer("draw weld cloud");
+	viewer.addPointCloud(cloud, "cloud");
+	cout << "after process:" << cloud->points.size() << "points" << endl;
+	cout << "showing result of drawing weld cloud" << endl;
 	while (!viewer.wasStopped())
 	{
 		viewer.spinOnce(100);
+	}
+	return;
+
+}
+
+void pointCloudProcess::removeOutlier(int meank,double threshold)
+{
+	pcl::StatisticalOutlierRemoval<pcl::PointXYZ> filter;
+	filter.setInputCloud(cloud);
+	cout << "before process:" << cloud->points.size() << "points" << endl;
+	filter.setMeanK(meank);
+	filter.setStddevMulThresh(threshold);
+	filter.filter(*cloud);
+	pcl::visualization::PCLVisualizer viewer2("remove outlier");
+	viewer2.addPointCloud(cloud,"cloud");
+	cout << "after process:" << cloud->points.size() << "points" <<endl;
+	cout << "showing result of remove outlier" << endl;
+	while (!viewer2.wasStopped())
+	{
+		viewer2.spinOnce(100);
 	}
 	return;
 }
@@ -22,21 +43,24 @@ void pointCloudProcess::drawWeldCloud(int maxiterations, double threshold)
 {
 	ModelCoefficients::Ptr cofficients(new ModelCoefficients());
 	PointIndices::Ptr inliers(new PointIndices());
-	SACSegmentation<PointXYZRGB> seg;
+	SACSegmentation<PointXYZ> seg;
 	seg.setOptimizeCoefficients(true);
 	seg.setModelType(SACMODEL_PLANE);
 	seg.setMethodType(SAC_RANSAC);
 	seg.setMaxIterations(maxiterations);
 	seg.setDistanceThreshold(threshold);
-	ExtractIndices<PointXYZRGB> extract;
+	ExtractIndices<PointXYZ> extract;
 	seg.setInputCloud(cloud);
 	seg.segment(*inliers, *cofficients);
 	extract.setInputCloud(cloud);
+	cout << "before process:" << cloud->points.size() << "points" << endl;
 	extract.setIndices(inliers);
 	extract.setNegative(true);
 	extract.filter(*cloud);
-	pcl::visualization::PCLVisualizer viewer("simple");
-	viewer.addPointCloud(cloud);
+	pcl::visualization::PCLVisualizer viewer("draw weld cloud");
+	viewer.addPointCloud(cloud, "cloud");
+	cout << "after process:" << cloud->points.size() << "points" << endl;
+	cout << "showing result of drawing weld cloud" << endl;
 	while (!viewer.wasStopped())
 	{
 		viewer.spinOnce(100);
@@ -46,10 +70,11 @@ void pointCloudProcess::drawWeldCloud(int maxiterations, double threshold)
 
 void pointCloudProcess::donFilter(float smallsize=0.005f, float largesize=1.0f)
 {
-	NormalEstimationOMP<PointXYZRGB, PointNormal> ne;
-	search::KdTree<PointXYZRGB>::Ptr tree(new search::KdTree<PointXYZRGB>);
+	NormalEstimationOMP<PointXYZ, PointNormal> ne;
+	search::KdTree<PointXYZ>::Ptr tree(new search::KdTree<PointXYZ>);
 	tree->setInputCloud(cloud);
 	ne.setInputCloud(cloud);
+	cout << "before process:" << cloud->points.size() << "points" << endl;
 	ne.setSearchMethod(tree);
 	ne.setViewPoint(numeric_limits<float>::max(), numeric_limits<float>::max(), numeric_limits<float>::max());
 	PointCloud<PointNormal>::Ptr normals_small_scale(new PointCloud<PointNormal>), normals_large_scale(new PointCloud<PointNormal>);
@@ -59,7 +84,9 @@ void pointCloudProcess::donFilter(float smallsize=0.005f, float largesize=1.0f)
 	ne.setRadiusSearch(largesize);
 	cout << "computing normals of large size" << endl;
 	ne.compute(*normals_large_scale);
-	DifferenceOfNormalsEstimation<PointXYZRGB, PointNormal, PointNormal> don;
+	PointCloud<PointNormal>::Ptr doncloud(new pcl::PointCloud<PointNormal>);
+	copyPointCloud<PointXYZ, PointNormal>(*cloud, *doncloud);
+	DifferenceOfNormalsEstimation<PointXYZ, PointNormal, PointNormal> don;
 	don.setInputCloud(cloud);
 	don.setNormalScaleLarge(normals_large_scale);
 	don.setNormalScaleSmall(normals_small_scale);
@@ -69,7 +96,6 @@ void pointCloudProcess::donFilter(float smallsize=0.005f, float largesize=1.0f)
 		exit(EXIT_FAILURE);
 	}
 	cout << "computing don" << endl;
-	PointCloud<PointNormal>::Ptr doncloud(new pcl::PointCloud<PointNormal>);
 	don.computeFeature(*doncloud);
 	boost::shared_ptr<pcl::visualization::PCLVisualizer> MView(new pcl::visualization::PCLVisualizer("Showing the difference of curvature of two scale"));
 	visualization::PointCloudColorHandlerGenericField<PointNormal> handler_k(doncloud, "curvature");
@@ -119,10 +145,11 @@ void pointCloudProcess::drawWeldLine(float threshold=0.005f)
 	getMinMax3D(*doncloud_filtered_duplic, min, max);
 	PointXYZ p1(((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], min.y, ((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
 	PointXYZ p2(((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], max.y, ((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
-	pcl::visualization::PCLVisualizer viewer("simple");
+	pcl::visualization::PCLVisualizer viewer("draw weld line");
 	viewer.addPointCloud(doncloud_filtered_duplic);
 	viewer.addLine<PointXYZ>(p1, p2, 0, 1, 0, "line", 0);
 	//viewer.addLine<PointXYZ>(min, max, 1, 0, 0, "line2", 0);
+	cout << "showing result of draw weld line" << endl;
 	while (!viewer.wasStopped())
 	{
 		viewer.spinOnce(100);

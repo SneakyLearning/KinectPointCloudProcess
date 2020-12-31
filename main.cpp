@@ -39,7 +39,8 @@ int main()
 	trans.addTargetPoints(0.38551146f, 0.51143277f, 0.28599533f);*/
 	trans.computerTranform();
 	pointCloudProcess pro;
-	pro.removeOutlier(25,0.1);
+	pro.voxelfilter();
+	pro.removeOutlier(500,0.01);
 	pro.drawWeldCloud(1000, 0.1);
 	pro.donFilter(0.005, 1.0);
 	pro.drawWeldLine(0.005);

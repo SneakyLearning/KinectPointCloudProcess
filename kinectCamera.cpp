@@ -5,7 +5,7 @@ const int width = 640;
 const int height = 480;
 
 Mat image_rgb(480, 640, CV_8UC3);
-PointCloud<PointXYZRGB>::Ptr cloud(new PointCloud<PointXYZRGB>);
+PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
 vector<vector<int>> nine_points;
 vector<vector<float>> nine_points_xyz;
 
@@ -69,13 +69,13 @@ void kinectCamera::getData()
 			cloud->points[j * 640 + i].x = pos.x / pos.w;
 			cloud->points[j * 640 + i].y = pos.y / pos.w;
 			cloud->points[j * 640 + i].z = pos.z / pos.w;
-			cloud->points[j * 640 + i].r = image_rgb.at<Vec3b>(j, 639-i)[2];
+			/*cloud->points[j * 640 + i].r = image_rgb.at<Vec3b>(j, 639-i)[2];
 			cloud->points[j * 640 + i].g = image_rgb.at<Vec3b>(j, 639-i)[1];
-			cloud->points[j * 640 + i].b = image_rgb.at<Vec3b>(j, 639-i)[0];
+			cloud->points[j * 640 + i].b = image_rgb.at<Vec3b>(j, 639-i)[0];*/
 		}
 	}
 	pcl::visualization::PCLVisualizer viewer("simple");
-	viewer.addPointCloud(cloud);
+	viewer.addPointCloud(cloud,"cloud");
 	while (!viewer.wasStopped())
 	{
 		viewer.spinOnce(100);
