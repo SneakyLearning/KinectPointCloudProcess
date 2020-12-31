@@ -40,8 +40,8 @@ int main()
 	trans.computerTranform();
 	pointCloudProcess pro;
 	pro.voxelfilter();
-	pro.removeOutlier(500,0.01);
-	pro.drawWeldCloud(1000, 0.1);
+	pro.removeOutlier(500,0.001);
+	pro.drawWeldCloud(1000, 0.05);
 	pro.donFilter(0.005, 1.0);
 	pro.drawWeldLine(0.005);
 	trans.convert_coordinate_to_robot(1.0f, 2.0f, 3.0f);
