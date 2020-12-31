@@ -121,7 +121,7 @@ void pointCloudProcess::donFilter(float smallsize=0.005f, float largesize=1.0f)
 	MView2->spin();
 }
 
-void pointCloudProcess::drawWeldLine(float threshold=0.005f)
+vector<PointXYZ> pointCloudProcess::drawWeldLine(float threshold=0.005f)
 {
 	PointCloud<PointXYZ>::Ptr doncloud_filtered_duplic(new PointCloud<PointXYZ>());
 	PointCloud<PointXYZ>::Ptr cloud_line(new PointCloud<PointXYZ>());
@@ -154,5 +154,6 @@ void pointCloudProcess::drawWeldLine(float threshold=0.005f)
 	{
 		viewer.spinOnce(100);
 	}
-	return;
+	vector<PointXYZ> result = { p1,p2 };
+	return result;
 }

@@ -35,5 +35,5 @@ public:
 	void removeOutlier(int meank , double threshold );
 	void drawWeldCloud(int maxiterations, double threshold);
 	void donFilter(float smallsize,float largesize);
-	void drawWeldLine(float threshold);
+	vector<PointXYZ> drawWeldLine(float threshold);
 };
