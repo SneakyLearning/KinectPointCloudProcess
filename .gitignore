@@ -4,3 +4,7 @@ x64/
 *.vcxproj
 *.filters
 *.user
+/pcl_debug_x64.props
+/opencv_debug_x64.props
+/kinect_debug_x64.props
+/2ndtemplate.jpg
