@@ -40,10 +40,10 @@ int main()
 	trans.computerTranform();
 	pointCloudProcess pro;
 	pro.voxelfilter();
-	pro.removeOutlier(500,0.001);
-	pro.drawWeldCloud(1000, 0.05);
-	pro.donFilter(0.005, 1.0);
-	vector<PointXYZ> points = pro.drawWeldLine(0.005);
+	pro.removeOutlier(800,0.15);
+	pro.drawWeldCloud(1000, 0.010);
+	pro.donFilter(0.003, 0.5);
+	vector<PointXYZ> points = pro.drawWeldLine(0.002);
 	for (size_t i = 0; i < points.size(); i++)
 	{
 		trans.convert_coordinate_to_robot(points[i].x, points[i].y, points[i].z);
