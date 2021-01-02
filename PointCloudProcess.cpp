@@ -157,3 +157,37 @@ vector<PointXYZ> pointCloudProcess::drawWeldLine(float threshold=0.005f)
 	vector<PointXYZ> result = { p1,p2 };
 	return result;
 }
+
+vector<PointXYZ> pointCloudProcess::drawWeldLine(PointCloud<PointXYZ>::Ptr source, float threshold)
+{
+	PointCloud<PointXYZ>::Ptr cloud_line(new PointCloud<PointXYZ>());
+	ModelCoefficients::Ptr coefficents(new ModelCoefficients);
+	PointIndices::Ptr inliers(new PointIndices);
+	SACSegmentation<PointXYZ> seg;
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(SACMODEL_LINE);
+	seg.setMethodType(SAC_RANSAC);
+	seg.setDistanceThreshold(threshold);
+	seg.setInputCloud(source);
+	seg.segment(*inliers, *coefficents);
+	ExtractIndices<PointXYZ> extract;
+	extract.setInputCloud(source);
+	extract.setIndices(inliers);
+	extract.setNegative(false);
+	extract.filter(*cloud_line);
+	PointXYZ min, max;
+	getMinMax3D(*cloud, min, max);
+	PointXYZ p1(((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], min.y, ((min.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
+	PointXYZ p2(((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[3]) + coefficents->values[0], max.y, ((max.y - coefficents->values[1]) / coefficents->values[4] * coefficents->values[5]) + coefficents->values[2]);
+	pcl::visualization::PCLVisualizer viewer("draw weld line");
+	viewer.addPointCloud(cloud);
+	viewer.addLine<PointXYZ>(p1, p2, 0, 1, 0, "line", 0);
+	//viewer.addLine<PointXYZ>(min, max, 1, 0, 0, "line2", 0);
+	cout << "showing result of draw weld line" << endl;
+	while (!viewer.wasStopped())
+	{
+		viewer.spinOnce(100);
+	}
+	vector<PointXYZ> result = { p1,p2 };
+	return result;
+}
