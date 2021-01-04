@@ -42,8 +42,9 @@ int main()
 	pro.voxelfilter();
 	pro.removeOutlier(800,0.15);
 	pro.drawWeldCloud(1000, 0.010);
+	pro.removeOutlier(500, 0.1);
 	//pro.donFilter(0.003, 0.5);
-	pro.drawWeldCloud(1000, 0.005);
+	pro.drawWeldCloud(1000, 0.002);
 	vector<PointXYZ> points = pro.drawWeldLine(cloud, 0.002);
 	for (size_t i = 0; i < points.size(); i++)
 	{
